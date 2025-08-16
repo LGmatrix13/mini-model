@@ -2,12 +2,14 @@ from abc import ABC, abstractmethod
 import polars as pl
 from sqlalchemy import Engine, create_engine
 import logging
-
+from litellm import completion
 
 class MiniModelBase(ABC):
-    def __init__(self, verbose: bool):
+    def __init__(self, model: str, purpose: str | None = None, verbose: bool = True):
         super().__init__()
+        self.model = model
         self.verbose = verbose
+        self.purpose = purpose
         self.logger = logging.getLogger(self.__class__.__name__)
     def _log_info(self, message: str):
         if self.verbose: self.logger.info(message)
@@ -54,6 +56,17 @@ class MiniModelBase(ABC):
             self._log_info(f"Processed and peristed batch {batch}")
             batch += 1
         self._log_info("Processed data successfully")
+    def predict(self, prompt: str, stream: bool):
+        response = completion(
+            model = self.model,
+            messages=[
+                {
+                    "content": prompt
+                }
+            ],
+            stream=stream
+        )
+        return response
 
             
     
